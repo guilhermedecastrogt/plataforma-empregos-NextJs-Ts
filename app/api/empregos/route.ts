@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+
+//GET /api/empregos
 export async function GET() {
   try {
     const empregos = await prisma.emprego.findMany({

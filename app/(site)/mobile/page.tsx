@@ -29,7 +29,7 @@ export default function MobileJobFeed() {
   const [selectedLocation, setSelectedLocation] = useState('')
   const [selectedType, setSelectedType] = useState('')
 
-  const observer = useRef<IntersectionObserver>()
+  const observer = useRef<IntersectionObserver | null>(null);
   const lastJobElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading) return
     if (observer.current) observer.current.disconnect()
