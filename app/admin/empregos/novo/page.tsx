@@ -20,17 +20,12 @@ export default function CreateEmpregoPage() {
     const [tipoVaga, setTipoVaga] = useState("clt");
     const [experiencia, setExperiencia] = useState("comExperiencia");
     const [localizacao, setLocalizacao] = useState("");
-    const [imagem, setImagem] = useState("");
+    const [imagemFile, setImagemFile] = useState<File | null>(null);
     const [ramoId, setRamoId] = useState("");
     const [regiaoId, setRegiaoId] = useState("");
 
     const [ramos, setRamos] = useState<Ramo[]>([]);
     const [regioes, setRegioes] = useState<Regiao[]>([]);
-
-    const [showRamoModal, setShowRamoModal] = useState(false);
-    const [showRegiaoModal, setShowRegiaoModal] = useState(false);
-    const [novoRamo, setNovoRamo] = useState("");
-    const [novaRegiao, setNovaRegiao] = useState("");
 
     useEffect(() => {
         fetchData();
@@ -53,71 +48,59 @@ export default function CreateEmpregoPage() {
         }
     }
 
-    async function handleCreateRamo() {
+    async function handleImageUpload(file: File): Promise<string> {
+        const formData = new FormData();
+        formData.append("file", file);
+
         try {
-            const res = await fetch("/api/admin/ramos", {
+            const response = await fetch("/api/admin/empregos/uploadImage", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ nome: novoRamo }),
+                body: formData,
             });
 
-            if (!res.ok) throw new Error("Erro ao criar ramo.");
-            setNovoRamo("");
-            setShowRamoModal(false);
-            await fetchData();
-            alert("Ramo criado com sucesso!");
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Erro ao fazer upload:", errorData);
+                throw new Error(errorData.error || "Erro ao fazer upload da imagem");
+            }
+
+            const data = await response.json();
+            console.log("URL da imagem:", data.url);
+            return data.url;
         } catch (error) {
-            console.error(error);
-            alert("Erro ao criar ramo.");
+            console.error("Erro ao enviar imagem:", error);
+            throw error;
         }
     }
 
-    async function handleCreateRegiao() {
-        try {
-            const res = await fetch("/api/admin/regioes", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ nome: novaRegiao }),
-            });
-
-            if (!res.ok) throw new Error("Erro ao criar região.");
-            setNovaRegiao("");
-            setShowRegiaoModal(false);
-            await fetchData();
-            alert("Região criada com sucesso!");
-        } catch (error) {
-            console.error(error);
-            alert("Erro ao criar região.");
-        }
-    }
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        if (!titulo || !tipoVaga || !experiencia || !localizacao || !imagem || !ramoId || !regiaoId) {
+        if (!titulo || !tipoVaga || !experiencia || !localizacao || !imagemFile || !ramoId || !regiaoId) {
             alert("Todos os campos são obrigatórios.");
             return;
         }
 
         try {
+            const imageUrl = await handleImageUpload(imagemFile); // Faz upload da imagem
+
+            const payload = {
+                titulo,
+                tipoVaga,
+                experiencia,
+                localizacao,
+                imagem: imageUrl, // Usa a URL da imagem retornada pelo servidor
+                ramoId,
+                regiaoId,
+            };
+
             const res = await fetch("/api/admin/empregos", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                    titulo,
-                    tipoVaga,
-                    experiencia,
-                    localizacao,
-                    imagem,
-                    ramoId: parseInt(ramoId, 10),
-                    regiaoId: parseInt(regiaoId, 10),
-                }),
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) {
@@ -132,6 +115,7 @@ export default function CreateEmpregoPage() {
             alert(error.message || "Erro ao criar emprego.");
         }
     }
+
 
     return (
         <div className="max-w-2xl mx-auto p-8 bg-white shadow-md rounded">
@@ -188,14 +172,14 @@ export default function CreateEmpregoPage() {
                     />
                 </div>
 
-                {/* Imagem */}
+                {/* Upload de Imagem */}
                 <div>
                     <label className="block text-gray-700 font-medium mb-2">Imagem</label>
                     <input
-                        type="text"
-                        value={imagem}
-                        onChange={(e) => setImagem(e.target.value)}
+                        type="file"
+                        onChange={(e) => setImagemFile(e.target.files?.[0] || null)}
                         className="w-full px-3 py-2 border border-gray-300 rounded"
+                        accept="image/*"
                         required
                     />
                 </div>
@@ -203,53 +187,35 @@ export default function CreateEmpregoPage() {
                 {/* Ramo */}
                 <div>
                     <label className="block text-gray-700 font-medium mb-2">Ramo</label>
-                    <div className="flex space-x-4">
-                        <select
-                            value={ramoId}
-                            onChange={(e) => setRamoId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded"
-                        >
-                            <option value="">Selecione um ramo</option>
-                            {ramos.map((ramo) => (
-                                <option key={ramo.id} value={ramo.id}>
-                                    {ramo.nome}
-                                </option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => setShowRamoModal(true)}
-                            className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
-                        >
-                            Criar Ramo
-                        </button>
-                    </div>
+                    <select
+                        value={ramoId}
+                        onChange={(e) => setRamoId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                    >
+                        <option value="">Selecione um ramo</option>
+                        {ramos.map((ramo) => (
+                            <option key={ramo.id} value={ramo.id}>
+                                {ramo.nome}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Região */}
                 <div>
                     <label className="block text-gray-700 font-medium mb-2">Região</label>
-                    <div className="flex space-x-4">
-                        <select
-                            value={regiaoId}
-                            onChange={(e) => setRegiaoId(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded"
-                        >
-                            <option value="">Selecione uma região</option>
-                            {regioes.map((regiao) => (
-                                <option key={regiao.id} value={regiao.id}>
-                                    {regiao.nome}
-                                </option>
-                            ))}
-                        </select>
-                        <button
-                            type="button"
-                            onClick={() => setShowRegiaoModal(true)}
-                            className="bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700"
-                        >
-                            Criar Região
-                        </button>
-                    </div>
+                    <select
+                        value={regiaoId}
+                        onChange={(e) => setRegiaoId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded"
+                    >
+                        <option value="">Selecione uma região</option>
+                        {regioes.map((regiao) => (
+                            <option key={regiao.id} value={regiao.id}>
+                                {regiao.nome}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {/* Botão de criar emprego */}
@@ -260,66 +226,6 @@ export default function CreateEmpregoPage() {
                     Criar Emprego
                 </button>
             </form>
-
-            {/* Modal para criar ramo */}
-            {showRamoModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                    <div className="bg-white p-6 rounded shadow-md">
-                        <h2 className="text-lg font-bold mb-4">Criar Ramo</h2>
-                        <input
-                            type="text"
-                            value={novoRamo}
-                            onChange={(e) => setNovoRamo(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
-                            placeholder="Digite o nome do ramo"
-                        />
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                onClick={() => setShowRamoModal(false)}
-                                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateRamo}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Modal para criar região */}
-            {showRegiaoModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-                    <div className="bg-white p-6 rounded shadow-md">
-                        <h2 className="text-lg font-bold mb-4">Criar Região</h2>
-                        <input
-                            type="text"
-                            value={novaRegiao}
-                            onChange={(e) => setNovaRegiao(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded mb-4"
-                            placeholder="Digite o nome da região"
-                        />
-                        <div className="flex justify-end space-x-4">
-                            <button
-                                onClick={() => setShowRegiaoModal(false)}
-                                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleCreateRegiao}
-                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            >
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }
