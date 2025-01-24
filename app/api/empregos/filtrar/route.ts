@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
 
-    // Captura os parâmetros de filtro
+    // api/empregos/filtrar get
     const search = searchParams.get("search") || "";
     const regiaoSlug = searchParams.get("regiao") || "";
     const ramoSlug = searchParams.get("ramo") || "";

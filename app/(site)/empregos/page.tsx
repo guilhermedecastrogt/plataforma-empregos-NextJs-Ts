@@ -30,7 +30,7 @@ type Ramo = {
 export default function JobListings() {
   const [empregos, setEmpregos] = useState<Emprego[]>([]);
   const [regioes, setRegioes] = useState<Regiao[]>([]);
-    const [ramos, setRamos] = useState<Ramo[]>([]);
+  const [ramos, setRamos] = useState<Ramo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedType, setSelectedType] = useState("");
