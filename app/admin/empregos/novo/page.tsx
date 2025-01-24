@@ -56,9 +56,15 @@ export default function CreateEmpregoPage() {
         }
     }
 
+    function sanitizeFileName(fileName: string): string {
+        return fileName.replace(/[^a-z0-9]/gi, "_").toLowerCase()
+    }
+
     async function handleImageUpload(file: File): Promise<string> {
+        const sanitizedName = sanitizeFileName(file.name)
+        const renamedFile = new File([file], sanitizedName, { type: file.type })
         const formData = new FormData()
-        formData.append("file", file)
+        formData.append("file", renamedFile)
 
         try {
             const response = await fetch("/api/admin/empregos/uploadImage", {
