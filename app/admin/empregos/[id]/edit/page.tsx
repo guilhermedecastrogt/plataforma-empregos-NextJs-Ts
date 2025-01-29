@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus } from "lucide-react"
+import Image from "next/image"
 
 type Ramo = {
     id: number
@@ -43,6 +44,7 @@ export default function EditEmpregoPage() {
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const [loading, setLoading] = useState(true)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     useEffect(() => {
         fetchData()
@@ -121,6 +123,7 @@ export default function EditEmpregoPage() {
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault()
+        setIsSubmitting(true)
 
         if (!titulo || !tipoVaga || !experiencia || !localizacao || !ramoId || !regiaoId) {
             alert("Todos os campos são obrigatórios.")
@@ -159,6 +162,8 @@ export default function EditEmpregoPage() {
         } catch (error: any) {
             console.error(error)
             alert(error.message || "Erro ao editar emprego.")
+        } finally {
+            setIsSubmitting(false)
         }
     }
 
@@ -301,22 +306,24 @@ export default function EditEmpregoPage() {
                                                 {imagem && (
                                                     <div className="flex-1">
                                                         <p className="text-sm text-[#515b6f] mb-1">Imagem atual:</p>
-                                                        <img
+                                                        <Image
                                                             src={imagem || "/placeholder.svg"}
                                                             alt="Logo atual"
+                                                            width={150}
+                                                            height={150}
                                                             className="max-w-full h-auto object-contain"
-                                                            style={{ maxHeight: "150px" }}
                                                         />
                                                     </div>
                                                 )}
                                                 {previewUrl && (
                                                     <div className="flex-1">
                                                         <p className="text-sm text-[#515b6f] mb-1">Nova imagem:</p>
-                                                        <img
+                                                        <Image
                                                             src={previewUrl || "/placeholder.svg"}
                                                             alt="Nova logo"
+                                                            width={150}
+                                                            height={150}
                                                             className="max-w-full h-auto object-contain"
-                                                            style={{ maxHeight: "150px" }}
                                                         />
                                                     </div>
                                                 )}
@@ -348,6 +355,7 @@ export default function EditEmpregoPage() {
                                                     variant="outline"
                                                     size="icon"
                                                     className="border-[#d6ddeb] hover:bg-[#f8f8fd] hover:text-[#26a4ff]"
+                                                    aria-label="Adicionar novo ramo"
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </Button>
@@ -400,6 +408,7 @@ export default function EditEmpregoPage() {
                                                     variant="outline"
                                                     size="icon"
                                                     className="border-[#d6ddeb] hover:bg-[#f8f8fd] hover:text-[#26a4ff]"
+                                                    aria-label="Adicionar nova região"
                                                 >
                                                     <Plus className="h-4 w-4" />
                                                 </Button>
@@ -434,8 +443,9 @@ export default function EditEmpregoPage() {
                                 <Button
                                     type="submit"
                                     className="w-full bg-[#4640de] hover:bg-[#4640de]/90 text-white h-12 text-lg font-medium"
+                                    disabled={isSubmitting}
                                 >
-                                    Salvar Alterações
+                                    {isSubmitting ? "Salvando..." : "Salvar Alterações"}
                                 </Button>
                             </div>
                         </form>

@@ -111,7 +111,7 @@ export default function CreateEmpregoPage() {
 
     async function handleAddRegiao() {
         try {
-            const res = await fetch("/api/admin/regiao", {
+            const res = await fetch("/api/admin/regioes", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
