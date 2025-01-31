@@ -7,17 +7,17 @@ WORKDIR /app
 # Copiar arquivos de dependências
 COPY package.json package-lock.json ./
 
-# Instalar dependências (inclui dependências de desenvolvimento necessárias para build)
+# Instalar dependências
 RUN npm install
 
 # Copiar o restante do projeto
 COPY . .
 
+# Gerar o Prisma Client para o ambiente correto
+RUN npx prisma generate
+
 # Construir aplicação
 RUN npm run build
-
-# Remover dependências de desenvolvimento para otimizar a imagem final
-RUN npm prune --omit=dev
 
 # Expor a porta usada pela aplicação
 EXPOSE 3000
