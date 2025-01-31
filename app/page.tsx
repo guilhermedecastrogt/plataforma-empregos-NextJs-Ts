@@ -22,6 +22,7 @@ type Regiao = {
 type Ramo = {
     nome: string
     slug: string
+
 }
 
 export default function Home() {
