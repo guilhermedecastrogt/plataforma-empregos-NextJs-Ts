@@ -1,11 +1,10 @@
-import { PrismaClient } from "@prisma/client"
-import type { AuthOptions } from "next-auth"
-import CredentialsProvider from "next-auth/providers/credentials"
-import { compare } from "bcrypt"
+import { PrismaClient } from "@prisma/client";
+import type { AuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import argon2 from "argon2";
 
-const prisma = new PrismaClient()
+const prisma = new PrismaClient();
 
-// Remove the duplicate export and just declare it as a const
 const authOptions: AuthOptions = {
     providers: [
         CredentialsProvider({
@@ -16,47 +15,48 @@ const authOptions: AuthOptions = {
             },
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
-                    throw new Error("Credenciais inválidas.")
+                    throw new Error("Credenciais inválidas.");
                 }
 
                 const admin = await prisma.admin.findUnique({
                     where: { email: credentials.email },
-                })
+                });
 
                 if (!admin) {
-                    throw new Error("Credenciais inválidas.")
+                    throw new Error("Credenciais inválidas.");
                 }
 
-                const isValid = await compare(credentials.password, admin.password)
+                // Usando Argon2 para verificar a senha
+                const isValid = await argon2.verify(admin.password, credentials.password);
                 if (!isValid) {
-                    throw new Error("Credenciais inválidas.")
+                    throw new Error("Credenciais inválidas.");
                 }
 
                 return {
                     id: admin.id.toString(),
                     username: admin.username,
                     email: admin.email,
-                }
+                };
             },
         }),
     ],
     callbacks: {
         async jwt({ token, user }) {
             if (user) {
-                token.id = user.id
-                token.username = user.name
-                token.email = user.email
+                token.id = user.id;
+                token.username = user.name;
+                token.email = user.email;
             }
-            return token
+            return token;
         },
 
         async session({ session, token }) {
             if (token) {
                 session.user = {
                     email: token.email,
-                }
+                };
             }
-            return session
+            return session;
         },
     },
     pages: {
@@ -66,7 +66,6 @@ const authOptions: AuthOptions = {
     session: {
         strategy: "jwt",
     },
-}
+};
 
-// Single export statement at the end of the file
-export { authOptions }
+export { authOptions };
